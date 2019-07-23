@@ -28,7 +28,7 @@ def logs_to_str(logs):
 def get_epoch_monitor(io_handler, model_name='model', chkpt_interval=1, acc_tol=0.005, viz_root='visualizations/per_epoch'):
     assert chkpt_interval > 0 and acc_tol < 1
 
-    filter_path = io_handler.to_local_path(f'{viz_root}/rgb_conv')
+    filter_path = f'{viz_root}/rgb_conv'
     os.makedirs(filter_path, exist_ok=True)
 
     def _monitor(model, logs):
@@ -51,28 +51,48 @@ def get_epoch_monitor(io_handler, model_name='model', chkpt_interval=1, acc_tol=
         io_handler.save_log('logs.pkl', logs)
         io_handler.save_log_str(f'logs.txt', logs)
 
-        viz_conv_layer_filters(model[0][0].weight.data.cpu(), file=f'{filter_path}/epoch_%04d' % (epoch), padding=0)
-        # viz_conv_layer_filters(model[0][0].original_conv1.weight.data, file='visualizations/rgb_conv/epoch_%04d' % epoch, padding=0)
-        # viz_conv_layer_filters(model[0][0].new_conv1.weight.data, file='visualizations/e_conv/epoch_%04d' % epoch, padding=0)
+        fig = viz_conv_layer_filters(model[0][0].weight.data, scale_each=False, padding=1)
+        io_handler.save_img(fig, f'{filter_path}/epoch_%04d' % (epoch))
+        plt.close(fig)
+
+        fig = plot_lr(logs['epoch'], logs['lr'])
+        io_handler.save_img(fig, f'visualizations/lr')
+        plt.close(fig)
+
+        fig = plot_losses(logs['epoch'], logs['train_loss'], logs['val_loss'])
+        io_handler.save_img(fig, f'visualizations/loss')
+        plt.close(fig)
+
+        fig = plot_accs(logs['epoch'], logs['train_acc'], logs['val_acc'])
+        io_handler.save_img(fig, f'visualizations/accuracy')
+        plt.close(fig)
+
+        stat_figs = plot_class_stats(logs)
+        for stat, fig in stat_figs:
+            io_handler.save_img(fig, f'visualizations/{stat}')
+            plt.close(fig)
 
     return _monitor
 
 def get_batch_monitor(io_handler, viz_root='visualizations/per_batch', interval=4):
 
-    filter_path = io_handler.to_local_path(f'{viz_root}/rgb_conv')
-    grad_path = io_handler.to_local_path(f'{viz_root}/rgb_conv_grad')
+    filter_path = f'{viz_root}/rgb_conv'
+    grad_path = f'{viz_root}/rgb_conv_grad'
     os.makedirs(filter_path, exist_ok=True)
     os.makedirs(grad_path, exist_ok=True)
 
     def _monitor(model, epoch, batch_idx, batch, labels):
-        if (batch_idx + 1) % interval == 0:
-            fs = model[0][0].weight
-            viz_conv_layer_filters(fs.data.cpu(), file=f'{filter_path}/epoch_%04d_batch_%05d' % (epoch, batch_idx), scale_each=False, padding=0)
-            viz_conv_layer_filters(fs.grad.data.cpu(), file=f'{grad_path}/epoch_%04d_batch_%05d' % (epoch, batch_idx), scale_each=False, padding=0)
-            # viz_conv_layer_filters(model[0][0].original_conv1.weight.data, file='visualizations/rgb_conv/epoch_%04d' % epoch, padding=0)
-            # viz_conv_layer_filters(model[0][0].new_conv1.weight.data, file='visualizations/e_conv/epoch_%04d' % epoch, padding=0)
+        if (batch_idx + 1) % interval != 0:
+            return
 
-            # viz_conv_layer_filters(model[0][0].original_conv1.weight.grad.data, file='visualizations/rgb_conv_grad/epoch_%04d' % epoch, padding=0)
-            # viz_conv_layer_filters(model[0][0].new_conv1.weight.grad.data, file='visualizations/e_conv_grad/epoch_%04d' % epoch, padding=0)
+        fs = model[0][0].weight
+
+        fig = viz_conv_layer_filters(fs.data, scale_each=False, padding=1)
+        io_handler.save_img(fig, f'{filter_path}/epoch_%04d_batch_%05d' % (epoch, batch_idx))
+        plt.close(fig)
+
+        fig = viz_conv_layer_filters(fs.grad.data, scale_each=False, padding=1)
+        io_handler.save_img(fig, f'{grad_path}/epoch_%04d_batch_%05d' % (epoch, batch_idx))
+        plt.close(fig)
 
     return _monitor

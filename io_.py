@@ -8,7 +8,7 @@ class LocalIoHandler(object):
 		self.root = root
 		os.makedirs(root, exist_ok=True)
 		os.makedirs(self.to_local_path('data'), exist_ok=True)
-		os.makedirs(self.to_local_path('model'), exist_ok=True)
+		os.makedirs(self.to_local_path('models'), exist_ok=True)
 		os.makedirs(self.to_local_path('checkpoints'), exist_ok=True)
 		os.makedirs(self.to_local_path('best_model'), exist_ok=True)
 		os.makedirs(self.to_local_path('visualizations'), exist_ok=True)
@@ -30,8 +30,8 @@ class LocalIoHandler(object):
 			f.write(f'{s}\n')
 			f.flush()
 
-	def save_img(self, fig, path):
-		fig.savefig(self.to_local_path(path))
+	def save_img(self, fig, path, ext='.png'):
+		fig.savefig(f'{self.to_local_path(path)}{ext}')
 
 	def save_model(self, model, path, info={}):
 		state = {
@@ -40,9 +40,12 @@ class LocalIoHandler(object):
 		}
 		torch.save(state, self.to_local_path(path))
 
-	def load_model_weights(self, path, model):
+	def load_saved_model(self, path):
 	    state = torch.load(self.to_local_path(path))
-	    print(state['info'])
+	    return state
+
+	def load_model_weights(self, path, model):
+	    state = self.load_saved_model(path)
 	    model.load_state_dict(state['model'])
 
 	def save_log(self, path, log):
@@ -82,10 +85,11 @@ class S3IoHandler(object):
 		self.local_io_handler.append_to_file(path, s)
 		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
 
-	def save_img(self, fig, path):
-		local_path = self.to_local_path(path)
-		s3_path = self.to_s3_path(path)
-		self.local_io_handler(fig, path)
+	def save_img(self, fig, path, ext='.png'):
+		self.local_io_handler.save_img(fig, path, ext=ext)
+		
+		local_path = f'{self.to_local_path(path)}{ext}'
+		s3_path = f'{self.to_s3_path(path)}{ext}'
 		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
 
 	def save_model(self, model, path, info={}):
@@ -94,14 +98,13 @@ class S3IoHandler(object):
 		self.local_io_handler.save_model(model, path, info)
 		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
 
-	def load_model_weights(self, path, model):
-	    state = torch.load(self.to_local_path(path))
-	    print(state['info'])
-	    model.load_state_dict(state['model'])
+	def load_model_weights(self, s3_path, model, tgt_path):
+		local_path = self.to_local_path(tgt_path)
+		self.s3.download_file(self.s3_bucket, s3_path, local_path)
+		self.local_io_handler.load_model_weights(tgt_path, model)
 
 	def save_log(self, path, log):
 		self.save_pickled_file(path, log)
 
 	def save_log_str(self, path, log_str):
 		self.append_to_file(path, log_str)
-
