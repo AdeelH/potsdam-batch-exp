@@ -48,7 +48,7 @@ def validate(model, criterion, val_dl, nclasses):
 
 def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=identity):
     
-    loss = 0.
+    epoch_loss = 0.
     corrects = 0
     count = 0
 
@@ -67,7 +67,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
         loss.backward()
         optimizer.step()
 
-        loss += loss.item()
+        epoch_loss += loss.item()
         corrects += (preds.argmax(dim=-1) == labels).detach().cpu().sum()
         count += len(labels)
 
@@ -75,7 +75,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
 
     acc = corrects.float() / count
     
-    return loss / count, acc
+    return epoch_loss / count, acc
 
 
 def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(), 
