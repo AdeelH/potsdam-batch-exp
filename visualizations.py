@@ -28,7 +28,7 @@ def imshow_chw(x, **kwargs):
     plt.imshow(x.permute(1, 2, 0).squeeze(), **kwargs)
 
 
-def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channels=channels, max_depth=2):
+def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channels=[0, 1, 2], max_depth=2):
 
     im, label = original_ds[val_idx]
     im_rgb = im.permute(1, 2, 0)[..., :3].squeeze()
@@ -98,9 +98,9 @@ def viz_model_run(model, model_input, hook_callback, max_depth=2):
 
 def viz_conv_layer_filters(fs, normalize=True, scale_each=True, file=None, **kwargs):
     fs = fs.detach().cpu()
-    grid = tv.utils.make_grid(fs, **kwargs).permute(1, 2, 0)
+    grid = tv.utils.make_grid(fs, normalize=normalize, scale_each=scale_each, **kwargs).permute(1, 2, 0)
 
-    plt.figure(figsize=(14, 14))
+    fig = plt.figure(figsize=(14, 14))
     plt.imshow(grid)
     plt.axis('off')
 
@@ -108,6 +108,7 @@ def viz_conv_layer_filters(fs, normalize=True, scale_each=True, file=None, **kwa
         plt.savefig(file)
     else:
         plt.show()
+    plt.close(fig)
 
 
 def viz_1x1_conv_filters(model, file=None):
@@ -127,9 +128,9 @@ def viz_1x1_conv_filters(model, file=None):
     ax3.barh(np.arange(w.shape[0]), w.sum(dim=1))
     ax3.set_ylim(ax3.get_ylim()[::-1])
     ax3.set_xscale('log')
-    plt.show()
 
     if file is not None:
         fig.savefig(file)
-
-    return fig
+    else:
+        plt.show()
+    fig.close()

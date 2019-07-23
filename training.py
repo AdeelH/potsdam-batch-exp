@@ -4,22 +4,12 @@ from torch import nn
 from torch import optim
 from torch.nn import functional as F
 import torch.utils
-import torchvision as tv
-from torchvision import transforms as tf
 
+from collections import defaultdict
 import time
 
+from utils_ import *
 
-def identity(*args, **kwargs):
-    return
-
-def replace_zeros(t, val=1):
-    t[t == 0] = val
-    return t
-
-def fbeta(precision, recall, beta=2):
-    beta2 = beta ** 2
-    return (1 + beta2) * (precision * recall) / ((beta2 * precision) + recall)
 
 def validate(model, criterion, val_dl, nclasses):
 
@@ -56,17 +46,17 @@ def validate(model, criterion, val_dl, nclasses):
     return loss, (acc, precision, recall, f_score), (class_precision, class_recall, class_f_score)
 
 
-def train_epoch(model, train_dl, criterion, optimizer):
+def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=identity):
     
     loss = 0.
     corrects = 0
     count = 0
 
     model.train()
-    for i, (batch, labels) in enumerate(train_dl):
+    for i, (batch, labels_orig) in enumerate(train_dl):
         N = batch.shape[0]
         batch = batch.cuda()
-        labels = labels.view(-1).cuda()
+        labels = labels_orig.view(-1).cuda()
 
         preds = model(batch).permute(0, 2, 3, 1).contiguous()
         preds = preds.view(-1, preds.shape[-1])
@@ -81,13 +71,15 @@ def train_epoch(model, train_dl, criterion, optimizer):
         corrects += (preds.argmax(dim=-1) == labels).detach().cpu().sum()
         count += len(labels)
 
+        batch_callback(model, epoch, i, batch, labels_orig)
+
     acc = corrects.float() / count
     
     return loss, acc
 
 
 def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(), 
-    epoch_callback=identity, logs = defaultdict(list)):
+    epoch_callback=identity, batch_callback=identity, logs=defaultdict(list)):
     '''Train a classification model.
 
     Args:
@@ -99,15 +91,15 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
         - params: Additional training parameters.
         - criterion: Loss function.
         - epoch_callback: A callback that receives the model and logs as input. Called at the end of every epoch.
+        - batch_callback: A callback that receives the model, epoch, batch number, batch, and labels. Called at the end of every epoch.
         - logs: dict of logged variables. Default: defaultdict(list).
     '''
-    log_fname = f'{save_name}|logs_{datetime.now()}'
     torch.cuda.empty_cache()
     for epoch in range(params['epochs']):
         
         # train (fwd pass and backprop)
         train_start_time = time.time()
-        train_loss, train_acc = train_epoch(model, train_dl, criterion, optimizer)
+        train_loss, train_acc = train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=batch_callback)
         train_end_time = time.time()
 
         # validate
