@@ -28,7 +28,7 @@ def validate(model, criterion, val_dl, nclasses):
             preds = model(batch).detach().cpu().permute(0, 2, 3, 1).contiguous()
             preds = preds.view(-1, preds.shape[-1])
 
-            loss += criterion(preds, labels)
+            loss += criterion(preds, labels).item()
             preds = preds.argmax(dim=-1)
             conf_matrix += ((preds == classes[:, None]) & (labels == classes[:, None, None])).sum(dim=2).float()
 
@@ -67,7 +67,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
         loss.backward()
         optimizer.step()
 
-        loss += loss.detach().cpu()
+        loss += loss.item()
         corrects += (preds.argmax(dim=-1) == labels).detach().cpu().sum()
         count += len(labels)
 
