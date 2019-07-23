@@ -146,15 +146,15 @@ def plot_epoch_wise(epochs, ys, title='', labels=None, show=False, figsize=(10, 
 
 
 def plot_lr(epochs, lr, title='Learning rate', show=False, figsize=(10, 10)):
-    return plot_epoch_wise(epochs, [lr], show=show, figsize=figsize)
+    return plot_epoch_wise(epochs, [lr], title=title, show=show, figsize=figsize)
 
 
 def plot_losses(epochs, train_loss, val_loss, title='Loss', show=False, figsize=(10, 10)):
-    return plot_epoch_wise(epochs, [train_loss, val_loss], show=show, figsize=figsize, labels=('train', 'val'))
+    return plot_epoch_wise(epochs, [train_loss, val_loss], title=title, show=show, figsize=figsize, labels=('train', 'val'))
 
 
 def plot_accs(epochs, train_acc, val_acc, title='Accuracy', show=False, figsize=(10, 10)):
-    return plot_epoch_wise(epochs, [train_acc, val_acc], show=show, figsize=figsize, labels=('train', 'val'))
+    return plot_epoch_wise(epochs, [train_acc, val_acc], title=title, show=show, figsize=figsize, labels=('train', 'val'))
 
 
 def plot_class_stats(logs, stats=['precision', 'recall', 'fscore'], show=False, figsize=(10, 10)):
