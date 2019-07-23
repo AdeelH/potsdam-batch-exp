@@ -75,7 +75,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
 
     acc = corrects.float() / count
     
-    return epoch_loss / count, acc
+    return epoch_loss / count, acc.item()
 
 
 def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(), 
@@ -109,9 +109,9 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
 
         logs['epoch'     ].append(epoch)
         logs['lr'        ].append(optimizer.param_groups[0]['lr'])
-        logs['train_loss'].append(train_loss.item())
-        logs['val_loss'  ].append(val_loss.item())
-        logs['train_acc' ].append(train_acc.item())
+        logs['train_loss'].append(train_loss)
+        logs['val_loss'  ].append(val_loss)
+        logs['train_acc' ].append(train_acc)
         logs['val_acc'   ].append(val_metrics[0].item())
         logs['train_time'].append(train_end_time - train_start_time)
         logs['val_time'  ].append(val_end_time - val_start_time)
