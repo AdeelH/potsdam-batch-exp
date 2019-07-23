@@ -43,7 +43,7 @@ def validate(model, criterion, val_dl, nclasses):
     recall = (weights * class_recall).sum()
     f_score = fbeta(precision, recall, beta=2)
     
-    return loss, (acc, precision, recall, f_score), (class_precision, class_recall, class_f_score)
+    return loss / conf_matrix.sum(), (acc, precision, recall, f_score), (class_precision, class_recall, class_f_score)
 
 
 def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=identity):
@@ -75,7 +75,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
 
     acc = corrects.float() / count
     
-    return loss, acc
+    return loss / count, acc
 
 
 def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(), 

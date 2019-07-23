@@ -133,6 +133,7 @@ def plot_epoch_wise(epochs, ys, title='', labels=None, show=False, figsize=(10, 
     for y in ys:
         plt.plot(epochs, y)
     plt.title(title)
+    plt.xlabel('epoch')
 
     if labels is not None:
         plt.legend(labels=labels)
