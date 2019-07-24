@@ -20,7 +20,7 @@ def checkpoint(io_handler, model, model_name, logs={}):
 def logs_to_str(logs):
         log_str = ''
         for key, log in logs.items():
-            log_str += '%-20s: %.4f\n' % (key, log[-1])
+            log_str += f'%-20s: {log[-1]}\n' % (key)
         log_str += '-----------------------------------------------------------------------------------------------\n'
 
         return log_str
