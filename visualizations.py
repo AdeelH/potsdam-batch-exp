@@ -119,7 +119,6 @@ def viz_1x1_conv_filters(fs, title='', show=False, figsize=(6, 12), cmap='gray')
     fig = plt.figure(figsize=figsize)
     plt.imshow(w, cmap=cmap)
     plt.title(title)
-    plt.axis('off')
 
     if show:
         fig.show()
