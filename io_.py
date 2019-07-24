@@ -79,6 +79,11 @@ class S3IoHandler(object):
 		self.local_io_handler.save_pickled_file(path, data)
 		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
 
+	def upload_file(self, src_path, tgt_path):
+		local_path = self.to_local_path(src_path)
+		s3_path = self.to_s3_path(tgt_path)
+		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
+
 	def append_to_file(self, path, s):
 		local_path = self.to_local_path(path)
 		s3_path = self.to_s3_path(path)
