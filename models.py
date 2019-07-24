@@ -75,8 +75,8 @@ def get_unet_custom(encoder, nclasses, last_cross=False):
 ######################################
 # Deeplab
 ######################################
-def get_deeplab(num_classes, pretrained=True):
-    return tv.models.segmentation.deeplabv3_resnet50(pretrained=pretrained, progress=True, num_classes=num_classes)
+def get_deeplab(nclasses, pretrained=True):
+    return tv.models.segmentation.deeplabv3_resnet101(pretrained=pretrained, progress=True, num_classes=nclasses)
 
 class DeepLabWrapper(nn.Module):
     def __init__(self, m, in_channels=3):
@@ -87,7 +87,7 @@ class DeepLabWrapper(nn.Module):
     def forward(self, X):
         return self.m(X)['out']
 
-def get_deeplab_custom(in_channels=3, pretrained=False):
-    return DeepLabWrapper(get_deeplab(pretrained=pretrained), in_channels=in_channels).cuda()
+def get_deeplab_custom(nclasses, in_channels=3, pretrained=False):
+    return DeepLabWrapper(get_deeplab(nclasses, pretrained=pretrained), in_channels=in_channels).cuda()
 
 
