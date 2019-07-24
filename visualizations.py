@@ -112,12 +112,12 @@ def viz_conv_layer_filters(fs, title='', normalize=True, scale_each=True, show=F
         return fig # remember to close figure after use
 
 
-def viz_1x1_conv_filters(fs, title='', show=False, figsize=(8, 12)):
+def viz_1x1_conv_filters(fs, title='', show=False, figsize=(6, 12), cmap='gray'):
     w = fs.squeeze().detach().cpu()
     assert w.ndim == 2
 
     fig = plt.figure(figsize=figsize)
-    plt.imshow(w, cmap='gray')
+    plt.imshow(w, cmap=cmap)
     plt.title(title)
     plt.axis('off')
 
