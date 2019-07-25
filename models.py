@@ -25,7 +25,7 @@ def unfreeze(m, recurse=True):
 		p.requires_grad = True
 
 	
-def attach_forward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=[nn.Sequential, nn.ModuleList]):
+def attach_forward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=(nn.Sequential, nn.ModuleList)):
 	if depth > max_depth:
 		return []
 
@@ -37,7 +37,7 @@ def attach_forward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=[n
 			hs.append(c.register_forward_hook(callback))
 	return hs
 
-def attach_backward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=[nn.Sequential, nn.ModuleList]):
+def attach_backward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=(nn.Sequential, nn.ModuleList)):
 	if depth > max_depth:
 		return []
 
@@ -124,6 +124,7 @@ class ModifiedConv(nn.Module):
 
 		return out
 
+from copy import deepcopy
 class ModifiedConv_alt(nn.Module):
 
 	def __init__(self, conv, bn, new_conv_in_channels=1, new_conv_out_channels=64, out_channels=64):
@@ -137,7 +138,7 @@ class ModifiedConv_alt(nn.Module):
 
 		self.original_conv = nn.Sequential(
 			conv,
-			bn,
+			deepcopy(bn),
 			nn.ReLU()
 		)
 		self.new_conv = nn.Sequential(
