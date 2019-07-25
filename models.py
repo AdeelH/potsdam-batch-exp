@@ -123,3 +123,36 @@ class ModifiedConv(nn.Module):
 		out = self.onexone(out)
 
 		return out
+
+class ModifiedConv_alt(nn.Module):
+
+	def __init__(self, conv, bn, new_conv_in_channels=1, new_conv_out_channels=64, out_channels=64):
+		super(ModifiedConv_alt, self).__init__()
+
+		self.orig_in = conv.in_channels
+		self.orig_out = conv.out_channels
+
+		self.new_in = new_conv_in_channels
+		self.new_out = new_conv_out_channels
+
+		self.original_conv = nn.Sequential(
+			conv,
+			bn,
+			nn.ReLU()
+		)
+		self.new_conv = nn.Sequential(
+			nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
+			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+			nn.ReLU()
+		)
+		self.onexone = nn.Conv2d(self.orig_out + self.new_out, out_channels, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False)
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		orig_out = self.original_conv(X[:, :self.orig_in])
+		new_out = self.new_conv(X[:, -self.new_in:])
+		concatenated = torch.cat((orig_out, new_out), dim=1)
+
+		out = self.onexone(concatenated)
+
+		return out
