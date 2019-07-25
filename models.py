@@ -157,3 +157,25 @@ class ModifiedConv_alt(nn.Module):
 		out = self.onexone(concatenated)
 
 		return out
+
+class ModifiedConv_add(nn.Module):
+
+	def __init__(self, conv, new_conv_in_channels=1):
+		super(ModifiedConv_add, self).__init__()
+
+		self.orig_in = conv.in_channels
+		self.orig_out = conv.out_channels
+
+		self.new_in = new_conv_in_channels
+		self.new_out = self.orig_out
+
+		self.original_conv = conv
+		self.new_conv = nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda()
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		orig_out = self.original_conv(X[:, :self.orig_in])
+		new_out = self.new_conv(X[:, -self.new_in:])
+		out = orig_out + new_out
+
+		return out

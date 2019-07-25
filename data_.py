@@ -6,7 +6,7 @@ from utils_ import *
 
 class Potsdam(tv.datasets.VisionDataset):
     
-    def __init__(self, d, chip_size=100, stride=1, tf=identity, x_tf=identity, y_tf=identity):
+    def __init__(self, d, chip_size=100, stride=1, tf=lambda x: x, x_tf=lambda x: x, y_tf=lambda x: x):
         super(Potsdam).__init__()
 
         self.data = list(d.values())
