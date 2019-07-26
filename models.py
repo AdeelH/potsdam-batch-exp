@@ -194,12 +194,12 @@ class ModifiedConv_alt_add(nn.Module):
 		self.original_conv = nn.Sequential(
 			conv,
 			deepcopy(bn).cuda(),
-			nn.ReLU().cuda()
+			nn.ReLU()
 		)
 		self.new_conv = nn.Sequential(
 			nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
-			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True).cuda(),
-			nn.ReLU().cuda()
+			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+			nn.ReLU()
 		)
 
 	def forward(self, X):
