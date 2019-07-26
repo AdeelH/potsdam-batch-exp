@@ -193,7 +193,7 @@ class ModifiedConv_alt_add(nn.Module):
 
 		self.original_conv = nn.Sequential(
 			conv,
-			deepcopy(bn).cuda(),
+			deepcopy(bn),
 			nn.ReLU()
 		)
 		self.new_conv = nn.Sequential(
