@@ -11,13 +11,15 @@ import torchvision as tv
 from torchvision import transforms as tf
 import matplotlib.pyplot as plt
 
-
+from collections import OrderedDict
 
 def imshow_chw(x, **kwargs):
     plt.imshow(x.permute(1, 2, 0).squeeze(), **kwargs)
 
 
 def viz_conv_layer_output(module, input, output):
+    if isinstance(output, OrderedDict): # handle deeplab
+        output = output['out']
     fs = output.detach().cpu().permute(1, 0, 2, 3)
 
     print('Layer:', module)
@@ -32,7 +34,7 @@ def viz_conv_layer_output(module, input, output):
     plt.show()
 
 
-def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channels=[0, 1, 2], max_depth=2):
+def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channels=[0, 1, 2], max_depth=2, recurse_whitelist=(nn.Sequential, nn.ModuleList)):
 
     im, label = original_ds[val_idx]
     im_rgb = im.permute(1, 2, 0)[..., :3].squeeze()
@@ -63,7 +65,7 @@ def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channel
     print('\n------------------------------------------- Layer-wise output -------------------------------------------\n')
     
     val_im = val_ds[val_idx][0].unsqueeze(0).cuda()
-    out = viz_model_run(model, val_im, viz_conv_layer_output, max_depth=max_depth)
+    out = viz_model_run(model, val_im, viz_conv_layer_output, max_depth=max_depth, recurse_whitelist=recurse_whitelist)
 
     print('\n------------------------------------------- Final prediction -------------------------------------------\n')
     yhat = out.cpu().squeeze().permute(1, 2, 0).argmax(dim=-1)
@@ -86,13 +88,13 @@ def model_debug(model, original_ds, val_ds, val_idx, flatten_seqs=False, channel
     plt.show()
 
 
-def viz_model_run(model, model_input, hook_callback, max_depth=2):
+def viz_model_run(model, model_input, hook_callback, max_depth=2, recurse_whitelist=(nn.Sequential, nn.ModuleList)):
 
     hs = []
 
     model.eval()
     try:
-        hs = attach_forward_hooks(model, hook_callback, max_depth=max_depth)
+        hs = attach_forward_hooks(model, hook_callback, max_depth=max_depth, recurse_whitelist=recurse_whitelist)
         with torch.no_grad():
             out = model(model_input)
     finally:

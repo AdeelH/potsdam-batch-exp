@@ -179,3 +179,55 @@ class ModifiedConv_add(nn.Module):
 		out = orig_out + new_out
 
 		return out
+
+class ModifiedConv_alt_add(nn.Module):
+
+	def __init__(self, conv, bn, new_conv_in_channels=1):
+		super(ModifiedConv_alt_add, self).__init__()
+
+		self.orig_in = conv.in_channels
+		self.orig_out = conv.out_channels
+
+		self.new_in = new_conv_in_channels
+		self.new_out = self.orig_out
+
+		self.original_conv = nn.Sequential(
+			conv,
+			deepcopy(bn),
+			nn.ReLU()
+		)
+		self.new_conv = nn.Sequential(
+			nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
+			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+			nn.ReLU()
+		)
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		orig_out = self.original_conv(X[:, :self.orig_in])
+		new_out = self.new_conv(X[:, -self.new_in:])
+		out = orig_out + new_out
+
+		return out
+
+class RGB_E_ensemble(nn.Module):
+
+	def __init__(self, rgb_model, e_model, nclasses=6):
+		super(RGB_E_ensemble, self).__init__()
+
+		self.rgb = nn.Sequential(
+			rgb_model,
+			nn.BatchNorm2d(nclasses, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+		)
+		self.e = nn.Sequential(
+			e_model,
+			nn.BatchNorm2d(nclasses, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+		)
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		rgb_out = self.rgb(X[:, :3])
+		e_out = self.e(X[:, -1:])
+		out = rgb_out + e_out
+
+		return out
