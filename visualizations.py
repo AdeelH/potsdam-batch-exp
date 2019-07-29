@@ -149,8 +149,17 @@ def plot_epoch_wise(epochs, ys, title='', labels=None, show=False, figsize=(10, 
         return fig # remember to close figure after use
 
 
+# def plot_lr(epochs, lr, title='Learning rate', show=False, figsize=(10, 10)):
+#     return plot_epoch_wise(epochs, [lr], title=title, show=show, figsize=figsize)
+
 def plot_lr(epochs, lr, title='Learning rate', show=False, figsize=(10, 10)):
-    return plot_epoch_wise(epochs, [lr], title=title, show=show, figsize=figsize)
+    keys = [k for k in logs.keys() if k.startswith('lr_')]
+    lrs = [logs[k] for k in keys]
+    fig = plot_epoch_wise(logs['epoch'], lrs, title=f'{stat}', show=show, figsize=figsize, labels=keys)
+    if show:
+        plt.show()
+    else:
+        return fig
 
 
 def plot_losses(epochs, train_loss, val_loss, title='Loss', show=False, figsize=(10, 10)):

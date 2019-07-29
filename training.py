@@ -109,7 +109,9 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
         val_end_time = time.time()
 
         logs['epoch'     ].append(epoch)
-        logs['lr'        ].append(optimizer.param_groups[0]['lr'])
+        for i, group in enumerate(optimizer.param_groups):
+            logs[f'lr_{i}'].append(group['lr'])
+
         logs['train_loss'].append(train_loss)
         logs['val_loss'  ].append(val_loss)
         logs['train_acc' ].append(train_acc)
