@@ -42,7 +42,7 @@ def validate(model, criterion, val_dl, nclasses):
     precision = (weights * class_precision).sum()
     recall = (weights * class_recall).sum()
     f_score = fbeta(precision, recall, beta=2)
-    
+
     return loss / conf_matrix.sum(), (acc, precision, recall, f_score), (class_precision, class_recall, class_f_score)
 
 
@@ -127,12 +127,13 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
 
         sched.step()
         epoch_callback(model, logs)
+    return logs
 
 
-def get_past_run_info(io_handler, epochs, optimizer, scheduler):
-    logs = io_handler.load_pickled_file('logs.pkl')
-    last_epoch = logs['epoch'][-1]
-    last_lr = logs['lr'][-1]
-    remaining_epochs = epochs - last_epoch
+# def get_past_run_info(io_handler, epochs, optimizer, scheduler):
+#     logs = io_handler.load_pickled_file('logs.pkl')
+#     last_epoch = logs['epoch'][-1]
+#     last_lr = logs['lr'][-1]
+#     remaining_epochs = epochs - last_epoch
 
-    return last_epoch, last_lr, remaining_epochs
+#     return last_epoch, last_lr, remaining_epochs
