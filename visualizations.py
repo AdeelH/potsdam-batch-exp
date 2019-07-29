@@ -155,7 +155,7 @@ def plot_epoch_wise(epochs, ys, title='', labels=None, show=False, figsize=(10, 
 def plot_lr(logs, title='Learning rate', show=False, figsize=(10, 10)):
     keys = [k for k in logs.keys() if k.startswith('lr_')]
     lrs = [logs[k] for k in keys]
-    fig = plot_epoch_wise(logs['epoch'], lrs, title=f'{stat}', show=show, figsize=figsize, labels=keys)
+    fig = plot_epoch_wise(logs['epoch'], lrs, title=title, show=show, figsize=figsize, labels=keys)
     if show:
         plt.show()
     else:
