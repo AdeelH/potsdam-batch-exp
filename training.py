@@ -95,7 +95,8 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
         - logs: dict of logged variables. Default: defaultdict(list).
     '''
     torch.cuda.empty_cache()
-    for epoch in range(params['epochs']):
+    start_epoch = (params['last_epoch'] + 1) if 'last_epoch' in params else 0
+    for epoch in range(start_epoch, params['epochs']):
 
         # train (fwd pass and backprop)
         train_start_time = time.time()

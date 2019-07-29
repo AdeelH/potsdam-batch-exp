@@ -103,9 +103,10 @@ class S3IoHandler(object):
 		self.local_io_handler.save_model(model, path, info)
 		self.s3.upload_file(local_path, self.s3_bucket, s3_path)
 
-	def load_model_weights(self, model, s3_path, tgt_path):
+	def load_model_weights(self, model, s3_path, tgt_path, force_download=False):
 		local_path = self.to_local_path(tgt_path)
-		self.s3.download_file(self.s3_bucket, s3_path, local_path)
+		if force_download or (not os.path.isfile(local_path)):
+			self.s3.download_file(self.s3_bucket, s3_path, local_path)
 		self.local_io_handler.load_model_weights(model, tgt_path)
 
 	def save_log(self, path, log):

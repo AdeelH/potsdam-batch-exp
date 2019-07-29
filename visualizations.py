@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 
 from collections import OrderedDict
 
+
 def imshow_chw(x, **kwargs):
     plt.imshow(x.permute(1, 2, 0).squeeze(), **kwargs)
 
@@ -28,7 +29,7 @@ def viz_conv_layer_output(module, input, output):
     normalize = not (fs.shape[-1] == 1 and fs.shape[-2] == 1)
     grid = tv.utils.make_grid(fs, nrow=int(len(fs)**0.5), normalize=normalize, scale_each=normalize, padding=2).permute(1, 2, 0)
 
-    plt.figure(figsize=(8, 8))
+    plt.figure(figsize=(12, 12))
     plt.imshow(grid, cmap='gray')
     plt.axis('off')
     plt.show()

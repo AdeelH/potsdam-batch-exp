@@ -36,7 +36,7 @@ class Potsdam(tv.datasets.VisionDataset):
                 return self._load(i)
             return [self._load(j) for j in i]
         if isinstance(i, slice):
-            return [self._load(j) for j in range(*i.indices(len(self.fnames)))]
+            return [self._load(j) for j in range(*i.indices(len(self)))]
         assert False, f"__getitem__(i): Invalid index"
         
     def _to_chip_idx(self, i):
