@@ -96,7 +96,7 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
     '''
     torch.cuda.empty_cache()
     start_epoch = (params['last_epoch'] + 1) if 'last_epoch' in params else 0
-    for epoch in range(start_epoch, params['epochs']):
+    for epoch in range(start_epoch, start_epoch + params['epochs']):
 
         # train (fwd pass and backprop)
         train_start_time = time.time()
