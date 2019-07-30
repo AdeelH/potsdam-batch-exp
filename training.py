@@ -143,3 +143,4 @@ def restore_training_state(io_handler, model, optimizer, sched, logs, train_para
 
     io_handler.fetch_file('logs.txt')
     io_handler.save_log_str(f'logs.txt', f'\n>>>> RESUMING FROM EPOCH {logs["epoch"][-1] + 1}\n')
+    return logs
