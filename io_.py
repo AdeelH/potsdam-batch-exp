@@ -156,7 +156,9 @@ class S3IoHandler(object):
 
 	def ls(self, path):
 		res = self.s3.list_objects(Bucket=self.s3_bucket, Prefix=path)
-		fnames = [c['Key'] for c in res['Content']]
+		if 'Contents' not in res:
+			return []
+		fnames = [c['Key'] for c in res['Contents']]
 		return fnames
 
 	def checkpoint_exists(self):
