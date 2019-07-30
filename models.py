@@ -84,12 +84,15 @@ class DeepLabWrapper(nn.Module):
 		if in_channels != 3:
 			m.backbone.conv1 = nn.Conv2d(in_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 		self.m = m
-	
+
 	def forward(self, X):
 		return self.m(X)['out']
 
 def get_deeplab_custom(nclasses, in_channels=3, pretrained=False):
-	return DeepLabWrapper(get_deeplab(nclasses, pretrained=pretrained), in_channels=in_channels).cuda()
+	model = DeepLabWrapper(get_deeplab(nclasses, pretrained=pretrained), in_channels=in_channels).cuda()
+	model.m.aux_classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1))
+	model.m.classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1))
+	return model
 
 
 ######################################
