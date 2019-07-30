@@ -81,7 +81,8 @@ def get_deeplab(nclasses, pretrained=True):
 class DeepLabWrapper(nn.Module):
 	def __init__(self, m, in_channels=3):
 		super(DeepLabWrapper, self).__init__()
-		m.backbone.conv1 = nn.Conv2d(in_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
+		if in_channels != 3:
+			m.backbone.conv1 = nn.Conv2d(in_channels, 64, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False)
 		self.m = m
 	
 	def forward(self, X):
