@@ -89,7 +89,7 @@ class DeepLabWrapper(nn.Module):
 		return self.m(X)['out']
 
 def get_deeplab_custom(nclasses, in_channels=3, pretrained=False):
-	model = DeepLabWrapper(get_deeplab(nclasses, pretrained=pretrained), in_channels=in_channels).cuda()
+	model = DeepLabWrapper(get_deeplab(21, pretrained=pretrained), in_channels=in_channels).cuda()
 	model.m.aux_classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1))
 	model.m.classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1))
 	return model
