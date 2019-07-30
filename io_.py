@@ -22,6 +22,9 @@ class LocalIoHandler(object):
 	def file_exists(self, path):
 		return os.path.isfile(self.to_local_path(path))
 
+	def fetch_file(self, path, force_download=False):
+		pass
+
 	def load_pickled_file(self, path):
 		with open(self.to_local_path(path), 'rb') as f:
 			data = pickle.load(f)
@@ -93,6 +96,12 @@ class S3IoHandler(object):
 
 	def to_s3_path(self, path):
 		return f'{self.s3_root}/{path}'
+
+	def fetch_file(self, path, force_download=False):
+		if force_download or (not self.file_exists(path)):
+			local_path = self.to_local_path(path)
+			s3_path = self.to_s3_path(path)
+			self.s3.download_file(self.s3_bucket, s3_path, local_path)
 
 	def load_pickled_file(self, s3_path, tgt_path, force_download=False):
 		if force_download or (not self.file_exists(tgt_path)):
