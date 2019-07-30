@@ -126,7 +126,7 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
             logs[f'class_{i}_fscore'].append(cm[2][i].item())
 
         sched.step()
-        epoch_callback(model, logs)
+        epoch_callback(model, optimizer, sched, logs)
     return logs
 
 
