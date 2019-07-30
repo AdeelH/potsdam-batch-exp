@@ -142,11 +142,11 @@ class S3IoHandler(object):
 			self.s3.download_file(self.s3_bucket, s3_path, local_path)
 		return self.local_io_handler.load_saved_model(path)
 
-	def load_model_weights(self, model, s3_path, path, force_download=False):
-		if force_download or (not self.file_exists(path)):
-			local_path = self.to_local_path(path)
+	def load_model_weights(self, model, s3_path, tgt_path, force_download=False):
+		if force_download or (not self.file_exists(tgt_path)):
+			local_path = self.to_local_path(tgt_path)
 			self.s3.download_file(self.s3_bucket, s3_path, local_path)
-		self.local_io_handler.load_model_weights(model, path)
+		self.local_io_handler.load_model_weights(model, tgt_path)
 
 	def save_log(self, path, log):
 		self.save_pickled_file(path, log)
