@@ -130,7 +130,7 @@ def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.Cr
     return logs
 
 
-def restore_training_state(io_handler, model, optimizer, sched, logs, train_params):
+def restore_training_state(io_handler, model, optimizer, sched, train_params):
     chkpt = io_handler.load_latest_checkpoint()
     logs = chkpt['info']
     train_params['last_epoch'] = logs['epoch'][-1]
