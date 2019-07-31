@@ -10,7 +10,8 @@ from torchvision import transforms as tf
 from fastai.vision import *
 from fastai.metrics import error_rate
 
-
+from collections import OrderedDict
+from copy import deepcopy
 
 ######################################
 # utils
@@ -26,7 +27,7 @@ def unfreeze(m, recurse=True):
 
 	
 def attach_forward_hooks(m, callback, depth=0, max_depth=3, recurse_whitelist=(nn.Sequential, nn.ModuleList)):
-	if depth > max_depth:
+	if depth >= max_depth:
 		return []
 
 	hs = []
@@ -90,7 +91,8 @@ class DeepLabWrapper(nn.Module):
 
 def get_deeplab_custom(nclasses, in_channels=3, pretrained=False):
 	model = DeepLabWrapper(get_deeplab(21, pretrained=pretrained), in_channels=in_channels).cuda()
-	model.m.aux_classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1)).cuda()
+	if pretrained:
+		model.m.aux_classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1)).cuda()
 	model.m.classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1)).cuda()
 	return model
 
@@ -128,7 +130,6 @@ class ModifiedConv(nn.Module):
 
 		return out
 
-from copy import deepcopy
 class ModifiedConv_alt(nn.Module):
 
 	def __init__(self, conv, bn, new_conv_in_channels=1, new_conv_out_channels=64, out_channels=64):
@@ -233,5 +234,31 @@ class RGB_E_ensemble(nn.Module):
 		rgb_out = self.rgb(X[:, :3])
 		e_out = self.e(X[:, -1:])
 		out = rgb_out + e_out
+
+		return out
+
+class DeeplabDoubleBackbone(nn.Module):
+
+	def __init__(self, original_backbone, new_conv_in_channels=1):
+		super(DeeplabDoubleBackbone, self).__init__()
+
+		self.orig_in = original_backbone.conv1.in_channels
+		self.orig_out = original_backbone.conv1.out_channels
+
+		self.new_in = new_conv_in_channels
+
+		self.original_backbone = original_backbone
+		self.new_backbone = deepcopy(original_backbone)
+
+		self.new_backbone.conv1 = nn.Conv2d(
+			self.new_in, self.orig_out, 
+			kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False
+		).cuda()
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		orig_out = self.original_backbone(X[:, :self.orig_in])
+		new_out = self.new_backbone(X[:, -self.new_in:])
+		out = OrderedDict({k: orig_out[k] + new_out[k] for k in orig_out.keys()})
 
 		return out
