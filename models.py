@@ -257,3 +257,29 @@ class DeeplabDoubleBackbone(nn.Module):
 		out = OrderedDict({k: orig_out[k] + new_out[k] for k in orig_out.keys()})
 
 		return out
+
+class DeeplabDoubleASPP(nn.Module):
+
+	def __init__(self, model1, model2):
+		super(DeeplabDoubleASPP, self).__init__()
+
+		self.in1 = model1.backbone.conv1.in_channels
+		self.ou1 = model1.backbone.conv1.out_channels
+
+		self.in2 = model2.backbone.conv1.in_channels
+
+		self.model1 = model1
+		self.model2 = model2
+
+		self.model1.classifier = nn.Sequential(*model1.classifier)
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		ou1 = self.model1.backbone(X[:, :self.in1])
+		new_out = self.model2.backbone(X[:, -self.in2:])
+		out = OrderedDict({k: ou1[k] + new_out[k] for k in ou1.keys()})
+
+		out['out'] = self.model1.classifier[0](out['out']) + self.model2.classifier[0](out['out'])
+		out['out'] = self.model1.classifier[1:](out['out'])
+
+		return out
