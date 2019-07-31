@@ -239,21 +239,16 @@ class RGB_E_ensemble(nn.Module):
 
 class DeeplabDoubleBackbone(nn.Module):
 
-	def __init__(self, original_backbone, new_conv_in_channels=1):
+	def __init__(self, original_backbone, new_backbone):
 		super(DeeplabDoubleBackbone, self).__init__()
 
 		self.orig_in = original_backbone.conv1.in_channels
 		self.orig_out = original_backbone.conv1.out_channels
 
-		self.new_in = new_conv_in_channels
+		self.new_in = new_backbone.conv1.in_channels
 
 		self.original_backbone = original_backbone
-		self.new_backbone = deepcopy(original_backbone)
-
-		self.new_backbone.conv1 = nn.Conv2d(
-			self.new_in, self.orig_out, 
-			kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False
-		).cuda()
+		self.new_backbone = new_backbone
 
 	def forward(self, X):
 		# X.shape = (N, Ch, H, W)
