@@ -304,3 +304,43 @@ class DeeplabDoubleASPP(nn.Module):
 		out['aux'] = F.interpolate(out['aux'], size=input_shape, mode='bilinear', align_corners=False)
 
 		return out
+
+class DeeplabDoublePartialBackbone(nn.Module):
+
+	def __init__(self, backbone1, backbone2, cut_idx):
+		super().__init__()
+
+		assert 0 < cut_idx <= 7
+
+		self.cut_idx = cut_idx
+
+		in_dims1 = backbone1.conv1.in_channels
+		in_dims2 = backbone2.conv1.in_channels
+
+		bb_seq1 = nn.Sequential(*list(backbone1.children()))
+		bb_seq2 = nn.Sequential(*list(backbone2.children()))
+		
+		self.head = nn.Sequential(
+			Split((in_dims1, in_dims2), dim=1),
+			Parallel((bb_seq1[:cut_idx], bb_seq2[:cut_idx])),
+			Add()
+		)
+		
+		self.aux_layer = nn.Sequential(
+			bb_seq1[cut_idx:-1],
+		)
+		self.out_layer = nn.Sequential(
+			bb_seq1[-1:],
+		)
+
+	def forward(self, X):
+		# X.shape = (N, Ch, H, W)
+		out = OrderedDict()
+
+		out1 = self.head(X)
+		if self.cut_idx < 7:
+			out1 = self.aux_layer(out1)
+
+		out['aux'] = out1
+		out['out'] = self.out_layer(out1)
+		return out
