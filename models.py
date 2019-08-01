@@ -264,7 +264,7 @@ class DeeplabDoubleASPP(nn.Module):
 		super(DeeplabDoubleASPP, self).__init__()
 
 		self.in1 = model1.backbone.conv1.in_channels
-		self.ou1 = model1.backbone.conv1.out_channels
+		self.out1 = model1.backbone.conv1.out_channels
 
 		self.in2 = model2.backbone.conv1.in_channels
 
@@ -275,11 +275,16 @@ class DeeplabDoubleASPP(nn.Module):
 
 	def forward(self, X):
 		# X.shape = (N, Ch, H, W)
-		ou1 = self.model1.backbone(X[:, :self.in1])
+		input_shape = X.shape[-2:]
+		out1 = self.model1.backbone(X[:, :self.in1])
 		new_out = self.model2.backbone(X[:, -self.in2:])
-		out = OrderedDict({k: ou1[k] + new_out[k] for k in ou1.keys()})
+		out = OrderedDict({k: out1[k] + new_out[k] for k in out1.keys()})
 
 		out['out'] = self.model1.classifier[0](out['out']) + self.model2.classifier[0](out['out'])
 		out['out'] = self.model1.classifier[1:](out['out'])
+		out['out'] = F.interpolate(out['out'], size=input_shape, mode='bilinear', align_corners=False)
+
+		out['aux'] = self.model1.aux_classifier[0](out['aux']) + self.model2.aux_classifier[0](out['aux'])
+		out['aux'] = F.interpolate(out['aux'], size=input_shape, mode='bilinear', align_corners=False)
 
 		return out
