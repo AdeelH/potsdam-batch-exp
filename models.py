@@ -175,7 +175,6 @@ class ModifiedConv(nn.Module):
 		)
 
 	def forward(self, X):
-		# X.shape = (N, Ch, H, W)
 		out = self.net(X)
 		return out
 
@@ -184,32 +183,27 @@ class ModifiedConv_alt(nn.Module):
 	def __init__(self, conv, bn, new_conv_in_channels=1, new_conv_out_channels=64, out_channels=64):
 		super(ModifiedConv_alt, self).__init__()
 
-		self.orig_in = conv.in_channels
-		self.orig_out = conv.out_channels
-
-		self.new_in = new_conv_in_channels
-		self.new_out = new_conv_out_channels
-
-		self.original_conv = nn.Sequential(
+		original_conv = nn.Sequential(
 			conv,
 			deepcopy(bn),
 			nn.ReLU()
 		)
-		self.new_conv = nn.Sequential(
-			nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
-			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+		new_conv = nn.Sequential(
+			nn.Conv2d(new_conv_in_channels, new_conv_out_channels, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
+			nn.BatchNorm2d(new_conv_out_channels, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
 			nn.ReLU()
 		)
-		self.onexone = nn.Conv2d(self.orig_out + self.new_out, out_channels, kernel_size=(1, 1), stride=(1, 1), padding=(0, 0), bias=False)
+		self.net = nn.Sequential(
+			Split((3, 1), dim=1),
+			Parallel((original_conv, new_conv)),
+			Concat(dim=1),
+			nn.BatchNorm2d(conv.out_channels + new_conv_out_channels, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+			nn.ReLU(),
+			ConvProject(conv.out_channels + new_conv_out_channels, out_channels, padding=(0, 0), bias=False)
+		)
 
 	def forward(self, X):
-		# X.shape = (N, Ch, H, W)
-		orig_out = self.original_conv(X[:, :self.orig_in])
-		new_out = self.new_conv(X[:, -self.new_in:])
-		concatenated = torch.cat((orig_out, new_out), dim=1)
-
-		out = self.onexone(concatenated)
-
+		out = self.net(X)
 		return out
 
 class ModifiedConv_add(nn.Module):
@@ -217,21 +211,15 @@ class ModifiedConv_add(nn.Module):
 	def __init__(self, conv, new_conv_in_channels=1):
 		super(ModifiedConv_add, self).__init__()
 
-		self.orig_in = conv.in_channels
-		self.orig_out = conv.out_channels
-
-		self.new_in = new_conv_in_channels
-		self.new_out = self.orig_out
-
-		self.original_conv = conv
-		self.new_conv = nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda()
+		new_conv = nn.Conv2d(new_conv_in_channels, conv.out_channels, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda()
+		self.net = nn.Sequential(
+			Split((3, 1), dim=1),
+			Parallel((conv, new_conv)),
+			Add()
+		)
 
 	def forward(self, X):
-		# X.shape = (N, Ch, H, W)
-		orig_out = self.original_conv(X[:, :self.orig_in])
-		new_out = self.new_conv(X[:, -self.new_in:])
-		out = orig_out + new_out
-
+		out = self.net(X)
 		return out
 
 class ModifiedConv_alt_add(nn.Module):
@@ -239,29 +227,25 @@ class ModifiedConv_alt_add(nn.Module):
 	def __init__(self, conv, bn, new_conv_in_channels=1):
 		super(ModifiedConv_alt_add, self).__init__()
 
-		self.orig_in = conv.in_channels
-		self.orig_out = conv.out_channels
-
-		self.new_in = new_conv_in_channels
-		self.new_out = self.orig_out
-
-		self.original_conv = nn.Sequential(
+		original_conv = nn.Sequential(
 			conv,
 			deepcopy(bn),
 			nn.ReLU()
 		)
-		self.new_conv = nn.Sequential(
-			nn.Conv2d(self.new_in, self.new_out, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
-			nn.BatchNorm2d(self.new_out, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
+		new_conv = nn.Sequential(
+			nn.Conv2d(new_conv_in_channels, conv.out_channels, kernel_size=(7, 7), stride=(2, 2), padding=(3, 3), bias=False).cuda(),
+			nn.BatchNorm2d(conv.out_channels, eps=1e-05, momentum=0.1, affine=True, track_running_stats=True),
 			nn.ReLU()
+		)
+		self.net = nn.Sequential(
+			Split((3, 1), dim=1),
+			Parallel((original_conv, new_conv)),
+			Concat(dim=1),
+			Add()
 		)
 
 	def forward(self, X):
-		# X.shape = (N, Ch, H, W)
-		orig_out = self.original_conv(X[:, :self.orig_in])
-		new_out = self.new_conv(X[:, -self.new_in:])
-		out = orig_out + new_out
-
+		out = self.net(X)
 		return out
 
 class DeeplabDoubleBackbone(nn.Module):
@@ -296,6 +280,7 @@ class DeeplabDoubleASPP(nn.Module):
 			Parallel((model1.backbone, model2.backbone)),
 		)
 		self.ASPP = Parallel((model1.classifier[0], model2.classifier[0]))
+
 		self.classifier = nn.Sequential(
 			self.ASPP,
 			Add(),
