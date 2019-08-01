@@ -141,6 +141,9 @@ def restore_training_state(io_handler, model, optimizer, sched, train_params):
     if 'sched' in chkpt:
         sched.load_state_dict(chkpt['sched'])
 
+    if sched.T_max != train_params['epochs']:
+        sched.T_max = train_params['epochs']
+
     io_handler.fetch_file('logs.txt')
     io_handler.save_log_str(f'logs.txt', f'\n>>>> RESUMING FROM EPOCH {logs["epoch"][-1] + 1}\n')
     return logs
