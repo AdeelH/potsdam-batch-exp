@@ -60,7 +60,7 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
 
         preds = model(batch).permute(0, 2, 3, 1).contiguous()
         preds = preds.view(-1, preds.shape[-1])
-
+        
         loss = criterion(preds, labels)
 
         optimizer.zero_grad()
@@ -74,11 +74,11 @@ def train_epoch(epoch, model, train_dl, criterion, optimizer, batch_callback=ide
         batch_callback(model, epoch, i, batch, labels_orig)
 
     acc = corrects.float() / count
-
+    
     return epoch_loss / count, acc.item()
 
 
-def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(reduction='sum'), 
+def train_seg(model, train_dl, val_dl, optimizer, sched, params, criterion=nn.CrossEntropyLoss(), 
     epoch_callback=identity, batch_callback=identity, logs=defaultdict(list)):
     '''Train a classification model.
 
