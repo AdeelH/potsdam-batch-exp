@@ -147,13 +147,14 @@ class ConvProject(nn.Module):
 		return self.conv(X)
 
 class AddDict(nn.Module):
-	def __init__(self, key='out'):
+	def __init__(self, keys=['out']):
 		super(AddDict, self).__init__()
-		self.key = key
+		self.keys = keys
 
 	def forward(self, Xs):
 		out = OrderedDict()
-		out[key] = sum(X[key] for X in Xs)
+		for key in self.keys:
+			out[key] = sum(X[key] for X in Xs)
 		return out
 
 ######################################
@@ -259,7 +260,7 @@ class DeeplabDoubleBackbone(nn.Module):
 		self.net = nn.Sequential(
 			Split((in_dims1, in_dims2), dim=1),
 			Parallel((backbone1, backbone2)),
-			AddDict(key='out')
+			AddDict(keys=['out', 'aux'])
 		)
 
 	def forward(self, X):
