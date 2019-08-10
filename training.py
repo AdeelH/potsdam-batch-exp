@@ -25,11 +25,11 @@ def validate(model, criterion, val_dl, nclasses):
             batch = batch.cuda()
             labels = labels.view(-1)
 
-            preds = model(batch).detach().cpu().permute(0, 2, 3, 1).contiguous()
+            preds = model(batch).detach().permute(0, 2, 3, 1).contiguous()
             preds = preds.view(-1, preds.shape[-1])
 
-            loss += criterion(preds, labels).item()
-            preds = preds.argmax(dim=-1)
+            loss += criterion(preds, labels.cuda()).item()
+            preds = preds.argmax(dim=-1).cpu()
             conf_matrix += ((preds == classes[:, None]) & (labels == classes[:, None, None])).sum(dim=2).float()
 
     acc = conf_matrix.trace() / conf_matrix.sum()
