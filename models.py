@@ -77,8 +77,8 @@ def get_unet_custom(encoder, nclasses, last_cross=False):
 ######################################
 # Deeplab
 ######################################
-def get_deeplab(nclasses, pretrained=True):
-	return tv.models.segmentation.deeplabv3_resnet101(pretrained=pretrained, progress=True, num_classes=nclasses)
+def get_deeplab(nclasses, pretrained=True, pretrained_backbone=True):
+	return tv.models.segmentation.deeplabv3_resnet101(pretrained=pretrained, progress=True, num_classes=nclasses, pretrained_backbone=pretrained_backbone)
 
 class DeepLabWrapper(nn.Module):
 	def __init__(self, m, in_channels=3):
@@ -90,8 +90,8 @@ class DeepLabWrapper(nn.Module):
 	def forward(self, X):
 		return self.m(X)['out']
 
-def get_deeplab_custom(nclasses, in_channels=3, pretrained=False):
-	model = DeepLabWrapper(get_deeplab(21, pretrained=pretrained), in_channels=in_channels).cuda()
+def get_deeplab_custom(nclasses, in_channels=3, pretrained=False, pretrained_backbone=True):
+	model = DeepLabWrapper(get_deeplab(21, pretrained=pretrained), in_channels=in_channels, pretrained_backbone=pretrained_backbone).cuda()
 	if pretrained:
 		model.m.aux_classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1)).cuda()
 	model.m.classifier[-1] = nn.Conv2d(256, nclasses, kernel_size=(1, 1), stride=(1, 1)).cuda()
