@@ -5,3 +5,7 @@ __pycache__/
 
 output/
 
+nbs/*/
+!nbs/deeplab/
+!nbs/unet/
+
